@@ -755,12 +755,13 @@ fit_gamm <- function(with_metrics, eqn) {
 }
 
 # Fit a GLMM and return the model output.
-fit_glmm <- function(with_metrics, eqn, optim = NA) {
+fit_glmm <- function(with_metrics, eqn, REML, optim = NA) {
   logger::log_info("Fitting the GLMM")
   if (is.na(optim)) optim <- "bobyqa"
   lme4::lmer(
     formula(eqn),
     data = with_metrics,
+    REML = REML,   # whether to adjust fitting procedure with REML
     control = lme4::lmerControl(
       optimizer = optim,
       optCtrl = list(maxfun = 9999999)  # To give time for convergence

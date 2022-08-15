@@ -174,33 +174,78 @@ sum(ifelse(is.na(conn$n_water), FALSE, conn$n_water > 0)) / nrow(conn)
 sum(ifelse(is.na(conn$n_water), FALSE, conn$n_water < 4)) / nrow(conn)
 # hist(conn$n_water[conn$n_water > 0])
 
-# Add a reduced habitat classification.
+# Simplify and re-level the LandUse column
+relevel_lu <- function(predominant_habitat) {
+  # Re-order into approximately increasing use to make the results neater.
+  factor(
+    Map(
+      function(x) {
+        if (x == "Primary forest" || x == "Primary non-forest") {
+          "Primary non-minimal"
+        } else if (x == "Young secondary vegetation") {
+          "Young secondary"
+        } else if (x == "Intermediate secondary vegetation") {
+          "Intermediate secondary"
+        } else if (x == "Mature secondary vegetation") {
+          "Mature secondary"
+        } else if (x == "Secondary vegetation (indeterminate age)") {
+          "Indeterminate age"
+        } else {
+          x
+        }
+      },
+      as.character(predominant_habitat)
+    ),
+    levels = c(
+      "Primary minimal",
+      "Primary non-minimal",
+      "Young secondary",
+      "Intermediate secondary",
+      "Mature secondary",
+      "Indeterminate age",
+      "Plantation forest",
+      "Cropland",
+      "Pasture",
+      "Urban"
+    )
+  )
+}
+abund_data$LandUse <- relevel_lu(abund_data$LandUse)
+comp_diss_data$LandUse <- relevel_lu(comp_diss_data$s2_lu)
+
+# Add a reduced habitat classification -- this is needed for the compositional
+# similarity model since there are not enough datapoints for the individual
+# in-use land types.
 reduced_habitat <- function(predominant_habitat) {
-  mod_hab <- factor(as.character(Map(
+  mod_hab <- Map(
     function(x) {
-      if (x == "Primary forest" || x == "Primary non-forest") {
-        "Primary"
-      } else if (x == "Young secondary vegetation") {
-        "Young"
-      } else if (x == "Intermediate secondary vegetation") {
-        "Intermediate"
-      } else if (x == "Mature secondary vegetation") {
-        "Mature"
-      } else if (x == "Secondary vegetation (indeterminate age)") {
+      if (x %in% c(
+        "Primary minimal",
+        "Primary non-minimal",
+        "Young secondary",
+        "Intermediate secondary",
+        "Mature secondary",
         "Indeterminate age"
-      } else if (x == "Primary minimal") {
-        "Primary minimal"
+      )) {
+        x
       } else {
         "In use"
       }
     },
-    predominant_habitat
-  )))
-  # make sure Primary minimal is the reference level.
-  relevel(mod_hab, "Primary minimal")
+    as.character(predominant_habitat)
+  )
+  # Re-order into approximately increasing use to make the results neater.
+  factor(mod_hab, levels = c(
+    "Primary minimal",
+    "Primary non-minimal",
+    "Young secondary",
+    "Intermediate secondary",
+    "Mature secondary",
+    "Indeterminate age",
+    "In use"
+  ))
 }
-abund_data$mod_hab <- reduced_habitat(abund_data$LandUse)
-comp_diss_data$mod_hab <- reduced_habitat(comp_diss_data$s2_lu)
+comp_diss_data$mod_hab <- reduced_habitat(comp_diss_data$LandUse)
 
 
 # Check for co-linearity in the explanatory variables. We see some here, since
@@ -245,20 +290,20 @@ comp_diss_data <- comp_diss_data %>%
   ) %>%
   # Also log-transform the distance between sites.
   mutate(
-    log10geo = log10(geog_dist + 1)  # add 1 to remove zeros
-  ) %>%
-  # Set primary-minimal as the baseline
-  mutate(
-    lu_contrast = relevel(
-      factor(lu_contrast), ref='Primary minimal_vs_Primary minimal'
-    )
+    log_geo = log(geog_dist + 1)  # add 1 to remove zeros
   )
 
-# Doing this stops us having rank deficiency. Before, the indeterminate age is
-# only associated with single values for the connectivity.
+# Indeterminate age secondary doesn't really help me answer my main question
+# either, so let's remove it from my analysis completely. Doing this stops us
+# having rank deficiency in the compositional similarity model too, since
+# before, the indeterminate age is only associated with single values for the
+# connectivity.
 table(comp_diss_data$mod_hab, round(comp_diss_data$ifm_w, 0))
 comp_diss_data <- comp_diss_data[
   comp_diss_data$mod_hab != "Indeterminate age",
+]
+abund_data <- abund_data[
+  abund_data$LandUse != "Indeterminate age",
 ]
 
 # Count how many sites we have now.
@@ -341,8 +386,6 @@ model_plot <-function(mod.for.plot){
 get_abund_eqn <- function(metric, random_slope = NA) {
   paste(
     "sqrt(RescaledAbundance) ~ ",
-      # "LandUse + ",
-      # "mod_hab : ", metric,
       if (!is.na(metric)) paste("LandUse * ", metric, sep="") else "LandUse",
       " + (1|SS)",
       " + (1|SSB)",
@@ -351,111 +394,96 @@ get_abund_eqn <- function(metric, random_slope = NA) {
   )
 }
 
-fit_models <- function(data, eqn) {
+fit_models <- function(data, eqn, REML) {
   list(
     null = fit_glmm(
-      data, eqn(NA)
+      data, eqn(NA), REML = REML
     ),
     ifm_w = fit_glmm(
-      data, eqn("ifm_w")
+      data, eqn("ifm_w"), REML = REML
     ),
     ifm_uw = fit_glmm(
-      data, eqn("ifm_uw")
+      data, eqn("ifm_uw"), REML = REML
     ),
     b2_w = fit_glmm(
-      data, eqn("b2_w")
+      data, eqn("b2_w"), REML = REML
     ),
     b2_uw = fit_glmm(
-      data, eqn("b2_uw"), optim = "Nelder_Mead"
+      data, eqn("b2_uw"), REML = REML, optim = "Nelder_Mead"
     ),
     b5_w = fit_glmm(
-      data, eqn("b5_w")
+      data, eqn("b5_w"), REML = REML
     ),
     b5_uw = fit_glmm(
-      data, eqn("b5_uw")
+      data, eqn("b5_uw"), REML = REML
     ),
     b7_w = fit_glmm(
-      data, eqn("b7_w")
+      data, eqn("b7_w"), REML = REML
     ),
     b7_uw = fit_glmm(   # to help the CS model converge.
-      data, eqn("b7_uw"), optim = "Nelder_Mead"
+      data, eqn("b7_uw"), REML = REML, optim = "Nelder_Mead"
     ),
     b10_w = fit_glmm(
-      data, eqn("b10_w")
+      data, eqn("b10_w"), REML = REML
     ),
     b10_uw = fit_glmm(
-      data, eqn("b10_uw")
+      data, eqn("b10_uw"), REML = REML
     ),
     d_nn_w = fit_glmm(
-      data, eqn("d_nn_w")
+      data, eqn("d_nn_w"), REML = REML
     ),
     d_nn_uw = fit_glmm(
-      data, eqn("d_nn_uw")
+      data, eqn("d_nn_uw"), REML = REML
     )
   )
 }
 
-model_abund <- fit_models(abund_data, get_abund_eqn)
-
-# See if mod_hab gives improvement over null -- turns out it doesn't. The gap is
-# too big to be closed by removing this few parameters.
-model_abund_mod_hab <- fit_models(
-  abund_data, \(metric) {
-    paste(
-      "sqrt(RescaledAbundance) ~ ",
-      if (!is.na(metric)) {
-        paste("mod_hab * ", metric, sep="")
-      } else {
-        "mod_hab"
-      },
-      " + (1|SS)",
-      " + (1|SSB)", sep=""
-    )
-  }
-)
+model_abund <- fit_models(abund_data, get_abund_eqn, REML = FALSE)
+model_abund_reml <- fit_models(abund_data, get_abund_eqn, REML = TRUE)
 
 # Examine the results for data reduced to those where we have nearest-neighbour
 # values.
 model_abund_red <- fit_models(
   abund_data[!is.na(abund_data$d_nn_w),],
-  get_abund_eqn
+  get_abund_eqn, REML = FALSE
+)
+model_abund_red_reml <- fit_models(
+  abund_data[!is.na(abund_data$d_nn_w),],
+  get_abund_eqn, REML = TRUE
 )
 
-# Examine how AICs compare on the smaller dataset alone. TODO: make this work
+# Examine how AICs compare on the smaller dataset alone.
 model_abund_cs_data <- fit_models(
   cs_dat_ab, \(metric) {
     paste(
       "sqrt(RescaledAbundance) ~ ",
       if (!is.na(metric)) {
-        paste("mod_hab.y * ", metric, ".y", sep="")
+        paste("mod_hab * ", metric, ".y", sep="")
       } else {
-        "mod_hab.y"
+        "mod_hab"
       },
       " + (1|SS.y)",
       " + (1|SSB)", sep=""
     )
-  }
+  }, REML = FALSE
 )
-
-# Doesn't seem to be a problem with only 0/1:
-table(round(cs_dat_ab$RescaledAbundance, 1), cs_dat_ab$mod_hab.y)
-
 
 # Compositional dissimilarity
 get_cs_eqn <- function(metric) {
   paste(
     "logitCS ~ ",
-      # "s2_lu * ", metric,   # rank deficiency
       if (!is.na(metric)) paste("mod_hab * ", metric, sep="") else "mod_hab",
-      " + log10geo",
+      " + log_geo",
       " + (1|SS)",
       " + (1|s2)",
     sep = ""
   )
 }
 
-model_cs <- fit_models(comp_diss_data, get_cs_eqn)
+model_cs <- fit_models(comp_diss_data, get_cs_eqn, REML = FALSE)
+model_cs_reml <- fit_models(comp_diss_data, get_cs_eqn, REML = TRUE)
 
+# For selecting the right optimiser when some don't converge.
 # all <- lme4::allFit(model_cs$ifm_w)
 # ss <- summary(all)
 # ss$which.OK
@@ -464,7 +492,11 @@ model_cs <- fit_models(comp_diss_data, get_cs_eqn)
 # values.
 model_cs_red <- fit_models(
   comp_diss_data[!is.na(comp_diss_data$d_nn_w),],
-  get_cs_eqn
+  get_cs_eqn, REML = FALSE
+)
+model_cs_red_reml <- fit_models(
+  comp_diss_data[!is.na(comp_diss_data$d_nn_w),],
+  get_cs_eqn, REML = TRUE
 )
 
 ## AIC
@@ -508,9 +540,7 @@ save_aic_data <- function(models, file_suffix, inc_nn = FALSE) {
         models$b7_w,
         models$b7_uw,
         models$b10_w,
-        models$b10_uw    # can't include, due to missing values
-        # model_abund$dnn_w,
-        # model_abund$dnn_uw
+        models$b10_uw
       )$AIC
     }
   )
@@ -536,6 +566,10 @@ abund_red_aic <- save_aic_data(
   paste("_abund_red", file_suffix, sep=""),
   inc_nn = TRUE
 )
+abund_cs_aic <- save_aic_data(
+  model_abund_cs_data,
+  paste("_abund_cs", file_suffix, sep="")
+)
 cs_aic <- save_aic_data(model_cs, paste("_cs", file_suffix, sep=""))
 cs_red_aic <- save_aic_data(
   model_cs_red,
@@ -543,26 +577,28 @@ cs_red_aic <- save_aic_data(
   inc_nn = TRUE
 )
 
+
+#### ANOVA
+library(car)
+
+Anova(model_abund$ifm_w)
+
+anova(model_abund$ifm_w, model_abund$null)
+
 ### BEST MODELS
 ## using `emmeans` here to look at the contrasts in the interacting variables
 library(emmeans)
 
-best_ab <- model_abund$ifm_w
-ab_metric <- "ifm_w"
-best_cs <- model_cs$ifm_uw
-cs_metric <- "ifm_uw"
+best_ab <- model_abund_reml$b7_w
+ab_metric <- "b7_w"
+best_cs <- model_cs_reml$ifm_w
+cs_metric <- "ifm_w"
 
 # Slopes
 emm <- emtrends(best_ab, "LandUse", var = ab_metric)
 ss_abund <- summary(emm, infer = c(TRUE, TRUE), null = 0)
 emm <- emtrends(best_cs, "mod_hab", var = cs_metric)
 ss_cs <- summary(emm, infer = c(TRUE, TRUE), null = 0)
-
-# # Intercepts
-# emm <- emtrends(model_abund$b2_w, "LandUse", var = "b2_w")
-# ss_abund <- summary(emm, infer = c(TRUE, TRUE), null = 0)
-# emm <- emtrends(model_cs$ifm_uw, "mod_hab", var = "ifm_uw")
-# ss_cs <- summary(emm, infer = c(TRUE, TRUE), null = 0)
 
 write_model_results <- function(ss, name) {
   ss <- as.data.frame(ss)
@@ -591,10 +627,3 @@ write_model_results <- function(ss, name) {
 ab_res <- write_model_results(ss_abund, "abund")
 cs_res <- write_model_results(ss_cs, "cs")
 
-
-#### ANOVA
-library(car)
-
-Anova(model_abund$ifm_w)
-
-anova(model_abund$ifm_w, model_abund$null)
