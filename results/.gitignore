@@ -1,0 +1,2 @@
+# Avoid including PDFs for figures in the repo
+*.pdf
