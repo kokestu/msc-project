@@ -360,6 +360,17 @@ cs_dat_ab <- comp_diss_data %>%
     abund_data, by = c("s2" = "SSBS")
   )
 
+# List all of the studies I used, so that people can find the data. TODO:
+# Actually get the references.
+write.table(
+  unique(as.character(abund_data$Source_ID)),
+  paste(
+    "../results/sources", file_suffix, ".csv",
+    sep = ""
+  ),
+  row.names = FALSE, col.names = FALSE, quote = FALSE
+)
+
 
 #####################
 ## Fit some models ##
@@ -627,3 +638,88 @@ write_model_results <- function(ss, name) {
 ab_res <- write_model_results(ss_abund, "abund")
 cs_res <- write_model_results(ss_cs, "cs")
 
+### PLOT
+library(ggplot2)
+library(effects)
+
+# Since the effects package unaccountably assumes that the data exists with the
+# same name at this level of abstraction.
+with_metrics <- abund_data
+
+effects_ab <- effects::effect(
+    term = "LandUse:b7_w",
+    mod = best_ab
+  ) %>%
+  as.data.frame()
+# # Try back transforming too
+# effects_ab$b7_w <- exp(effects_ab$b7_w)
+# effects_ab$fit <- effects_ab$fit ^ 2
+# effects_ab$upper <- effects_ab$upper ^ 2
+# effects_ab$lower <- effects_ab$lower ^ 2
+
+pdf(
+  paste(
+    "../results/ab_model", file_suffix, ".pdf",
+    sep = ""
+  )
+  # width = 10, height = 8 # inches
+)
+ggplot(effects_ab) +
+  # plot the average slope (fit) for each land use
+  geom_line(aes(
+    x = b7_w, y = fit, group = LandUse,
+    colour = LandUse
+  )) +
+  geom_ribbon(aes(
+    x = b7_w, ymin = lower, ymax = upper,
+    group = LandUse, fill = LandUse
+  ), alpha = 0.2) +
+  # add the x and y label, and update the legend label. Can add a title here too
+  # if we like.
+  labs(
+    x = "log(7km Buffer)", y = "sqrt(Rescaled Abundance)",
+    color = "Land Use", fill = "Land Use"
+  )
+dev.off()
+
+
+# For the compositional similarity
+
+# Since the effects package unaccountably assumes that the data exists with the
+# same name at this level of abstraction.
+with_metrics <- comp_diss_data
+effects_cs <- effects::effect(
+    term = "mod_hab:ifm_w",
+    mod = best_cs
+  ) %>%
+  as.data.frame()
+# # Try back transforming too
+# library(boot)
+# effects_cs$ifm_w <- exp(effects_cs$ifm_w)
+# effects_cs$fit <- inv.logit(effects_cs$fit)
+# effects_cs$upper <- inv.logit(effects_cs$upper)
+# effects_cs$lower <- inv.logit(effects_cs$lower)
+
+pdf(
+  paste(
+    "../results/cs_model", file_suffix, ".pdf",
+    sep = ""
+  )
+  # width = 10, height = 8 # inches
+)
+ggplot(effects_cs) +
+  # plot the average slope (fit) for each land use
+  geom_line(aes(
+    x = ifm_w, y = fit, group = mod_hab,
+    colour = mod_hab
+  )) +
+  geom_ribbon(aes(
+    x = ifm_w, ymin = lower, ymax = upper,
+    group = mod_hab, fill = mod_hab 
+  ), alpha = 0.2) +
+  # add the x and y label
+  labs(
+    x = "log(IFM)", y = "logit(Compositional Similarity)",
+    color = "Land Use", fill = "Land Use"
+  )
+dev.off()
