@@ -64,86 +64,6 @@ diversity <- diversity %>%
     )
   )
 
-#### MERGE SITES, broken atm
-# # Now we want to merge data from repeated measurements of the same site.
-# diversity <- diversity %>%
-#   # Group by aspects of the sites that should be identical if we need to merge
-#   # the abundances.
-#   # I only want to merge abundances if they are within the same study and
-#   # block, as I'm assuming that even if the locations and sampling times are
-#   # the same, if the blocks or studies are different, then there is some good
-#   # reason for this.
-#   dplyr::group_by(
-#     Source_ID, Study_number, Study_name, Block,
-#     # diversity metric type
-#     Diversity_metric, Diversity_metric_type, Diversity_metric_unit,
-#     Diversity_metric_is_effort_sensitive,
-#     # details of the sites
-#     Predominant_habitat, Use_intensity,
-#     Years_since_fragmentation_or_conversion,
-#     # details of the sampling method
-#     Sampling_method, Sampling_effort_unit,
-#     # species identity
-#     Study_common_taxon, Rank_of_study_common_taxon,
-#     Taxon_number, Taxon_name_entered,
-#     Indication, Parsed_name,
-#     Best_guess_binomial, COL_ID, Taxon, Name_status,
-#     Rank, Kingdom, Phylum, Class, Order, Family, Genus, Species,
-#     Higher_taxon,
-#     # site location
-#     Longitude, Latitude,
-#     # sampling time
-#     Sample_start_earliest, Sample_end_latest, Sample_date_resolution
-#   ) %>%
-#   # If the diversity metric is occurrence then if it is present at all, give
-#   # it a 1, if it is always absent, give it a 0.
-#   # Otherwise (if the metric is either abundance or species richness),
-#   # calculate the weighted abundance/richness for each taxonomic group,
-#   # weighted by sampling effort.
-#   dplyr::mutate(
-#     merged_diversity = ifelse(
-#       Diversity_metric_type == "Occurrence",
-#       # If any of the occurrence values are 1, `any` will return
-#       # TRUE.
-#       as.integer(any(Effort_corrected_measurement > 0)),
-#       # note that since we've already corrected the sampling effort, this is
-#       # essentially a mean rather than a weighted mean for abundance
-#       # measurements. It's a weighted mean for species richness though where
-#       # sampling efforts vary.
-#       stats::weighted.mean(
-#         x = Effort_corrected_measurement,
-#         w = Corrected_sampling_effort
-#       )
-#     )
-#   )
-# # Extract the group data so that we can create metrics about the merging.
-# group_dat <- diversity %>%
-#   dplyr::group_data() %>%
-#   dplyr::mutate(
-#     nvals_merged = lengths(.rows),
-#     merge_id = dplyr::row_number()
-#   )
-# # And ungroup the data now that we have the group summaries.
-# diversity <- dplyr::ungroup(diversity)
-# # Include the grouping data in the main merged table.
-# diversity <- dplyr::left_join(
-#   diversity, group_dat,
-#   by = c(
-#     "Source_ID", "Study_number", "Study_name", "Diversity_metric",
-#     "Diversity_metric_unit", "Diversity_metric_type",
-#     "Diversity_metric_is_effort_sensitive", "Sampling_method",
-#     "Sampling_effort_unit", "Block", "Sample_start_earliest",
-#     "Sample_end_latest", "Sample_date_resolution", "Predominant_habitat",
-#     "Use_intensity", "Years_since_fragmentation_or_conversion",
-#     "Longitude", "Latitude", "Taxon_number", "Taxon_name_entered",
-#     "Indication", "Parsed_name", "COL_ID", "Taxon", "Name_status",
-#     "Rank", "Kingdom", "Phylum", "Class", "Order", "Family", "Genus",
-#     "Species", "Higher_taxon", "Study_common_taxon",
-#     "Rank_of_study_common_taxon", "Best_guess_binomial"
-#   )
-# )
-######
-
 ### TOTAL ABUNDANCE ###
 abundance_data <- diversity %>%
   # Extract just the abundance measures
@@ -166,6 +86,25 @@ saveRDS(
   abundance_data,
   paste(
     "../data/site_abund_europe_",
+    format(Sys.time(), "%Y-%m-%d"),
+    ".rds",
+    sep = ""
+  )
+)
+
+# Get the information about the taxa in each site
+site_data <- diversity %>%
+  filter(Class != "") %>%
+  group_by(SSBS) %>%   # for each site
+  summarise({
+    row <- as.numeric(levels(Class) %in% Class)
+    names(row) <- levels(Class)
+    as.data.frame(t(row))
+  })
+saveRDS(
+  site_data[-2],
+  paste(
+    "../data/site_taxa_europe_",
     format(Sys.time(), "%Y-%m-%d"),
     ".rds",
     sep = ""

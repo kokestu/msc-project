@@ -158,6 +158,11 @@ comp_diss_data <- comp_diss %>%
   ) %>%
   dplyr::filter(!is.na(site))  # remove the sites with no connectivity data
 
+
+#############################################
+## DO FURTHER DATA ANALYSIS AND PROCESSING ##
+#############################################
+
 # Remove data with indeterminate land use (already gone from the comp diss
 # data).
 abund_data <- filter(
@@ -327,6 +332,30 @@ write.csv(
   row.names = FALSE, na = "", quote = FALSE
 )
 
+# Tabulate the number of sites with each taxa in the final data.
+site_data <- readRDS("../data/site_taxa_europe_2022-08-15.rds")
+abund_taxa <- colSums(
+  site_data[site_data$SSBS %in% abund_data$SSBS, ][-1]
+)
+cs_taxa <- colSums(
+  site_data[site_data$SSBS %in% comp_diss_data$s2, ][-1]
+)
+sites_taxa <- data.frame(
+  taxon = colnames(site_data[-1]),
+  abundance = abund_taxa,
+  cs = cs_taxa
+)
+write.csv(
+  sites_taxa[rowSums(sites_taxa[-1]) != 0,],
+  paste(
+    "../results/sites_taxa", file_suffix, ".csv",
+    sep = ""
+  ),
+  row.names = FALSE, quote = FALSE
+)
+
+
+
 # Make a nice illustration of the sites.
 abund_sites_all <- dplyr::distinct(abund_data, Latitude, Longitude)
 cs_sites_all <- dplyr::distinct(comp_diss_data, Latitude, Longitude)
@@ -370,6 +399,7 @@ write.table(
   ),
   row.names = FALSE, col.names = FALSE, quote = FALSE
 )
+
 
 
 #####################
