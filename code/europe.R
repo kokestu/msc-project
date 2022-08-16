@@ -118,21 +118,21 @@ conn2 <- conn %>%
       is.na(id),
       0,
       patch_cutoff * sum(
-        exp(-dist[dist > 0]) * area[dist > 0]
+        exp(-dist[which(dist > 0)]) * area[which(dist > 0)]
       )
     ),
     ifm_w = ifelse(
       is.na(id),
       0,
       patch_cutoff * sum(
-        exp(-weighted_dist[dist > 0]) * area[dist > 0]
+        exp(-weighted_dist[which(dist > 0)]) * area[which(dist > 0)]
       )
     ),
     ifm_w_05 = ifelse(
       is.na(id),
       0,
       patch_cutoff * sum(
-        exp(-0.5 * weighted_dist[dist > 0]) * area[dist > 0]
+        exp(-0.5 * weighted_dist[which(dist > 0)]) * area[which(dist > 0)]
       )
     )
   ) %>%
@@ -354,7 +354,26 @@ write.csv(
   row.names = FALSE, quote = FALSE
 )
 
-
+site_data <- readRDS("../data/site_phyla_europe_2022-08-16.rds")
+abund_phyla <- colSums(
+  site_data[site_data$SSBS %in% abund_data$SSBS, ][-1]
+)
+cs_phyla <- colSums(
+  site_data[site_data$SSBS %in% comp_diss_data$s2, ][-1]
+)
+sites_phyla <- data.frame(
+  taxon = colnames(site_data[-1]),
+  abundance = abund_phyla,
+  cs = cs_phyla
+)
+write.csv(
+  sites_phyla[rowSums(sites_phyla[-1]) != 0,],
+  paste(
+    "../results/sites_phyla", file_suffix, ".csv",
+    sep = ""
+  ),
+  row.names = FALSE, quote = FALSE
+)
 
 # Make a nice illustration of the sites.
 abund_sites_all <- dplyr::distinct(abund_data, Latitude, Longitude)
@@ -392,7 +411,11 @@ cs_dat_ab <- comp_diss_data %>%
 # List all of the studies I used, so that people can find the data. TODO:
 # Actually get the references.
 write.table(
-  unique(as.character(abund_data$Source_ID)),
+  gsub(
+    "_", "\\_",
+    unique(as.character(abund_data$Source_ID)),
+    fixed=TRUE
+  ),
   paste(
     "../results/sources", file_suffix, ".csv",
     sep = ""
@@ -550,7 +573,7 @@ save_aic_data <- function(models, file_suffix, inc_nn = FALSE) {
       "5km buffer", NA,
       "7km buffer", NA,
       "10km buffer", NA,
-      if(inc_nn) c("Nearest-neighbour", NA) else c()
+      if(inc_nn) c("NN", NA) else c()
     ),
     weighting = c("NA", rep(c("Weighted", "Unweighted"), if(inc_nn) 6 else 5)),
     aic = if(inc_nn) {
@@ -616,6 +639,44 @@ cs_red_aic <- save_aic_data(
   model_cs_red,
   paste("_cs_red", file_suffix, sep=""),
   inc_nn = TRUE
+)
+
+# Look at magnitude of differences between weighted and unweighted versions.
+get_differences <- function(aics) {
+  # Drop the null model
+  aics <- aics[-1,]
+  unweighted <- seq(1, nrow(aics)/2) * 2
+  weighted <- unweighted - 1
+  data.frame(
+    model = aics[weighted,]$model,
+    difference = aics[weighted,]$aicDelta - aics[unweighted,]$aicDelta
+  )
+}
+
+ab_diff <- get_differences(abund_aic)
+ab_cs_diff <- get_differences(abund_cs_aic)
+ab_red_diff <- get_differences(abund_red_aic)
+cs_diff <- get_differences(cs_aic)
+cs_red_diff <- get_differences(cs_red_aic)
+write.csv(
+  data.frame(
+    name = c(
+      "ab", "ab_cs", "ab_red",
+      "cs", "cs_red"
+    ),
+    meandif = round(c(
+      mean(ab_diff$difference),
+      mean(ab_cs_diff$difference),
+      mean(ab_red_diff$difference),
+      mean(cs_diff$difference),
+      mean(cs_red_diff$difference)
+    ), 4)
+  ),
+  paste(
+    "../results/aic_diff", file_suffix, ".csv",
+    sep = ""
+  ),
+  row.names = FALSE, quote = FALSE
 )
 
 

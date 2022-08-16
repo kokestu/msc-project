@@ -10,5 +10,5 @@ IFM,Weighted,5.05,0.071
 ,Unweighted,8.898,0.01
 10km buffer,Weighted,0,0.885
 ,Unweighted,24.893,0
-Nearest-neighbour,Weighted,13.214,0.001
+NN,Weighted,13.214,0.001
 ,Unweighted,14.237,0.001

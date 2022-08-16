@@ -9,12 +9,7 @@ library(purrr)
 library(furrr)
 
 library(magrittr) # for piping
-library(lme4) # for mixed effects models
-library(car) # for logit transformation with adjustment
 library(betapart) # for calculating balanced bray-curtis dissimilarity
-library(raster) # for working with raster data
-library(geosphere) # calculating geographic distance between sites
-library(viridis) # figure colours for colour blindness
 
 # Coordinates of the edges of Europe.
 longmin <- -11
@@ -32,7 +27,6 @@ diversity <- fetch_data(latmin, latmax, longmin, longmax)
 # this separate for comparison.
 table(diversity$Predominant_habitat, diversity$Use_intensity)
 
-# Let's simplify the data to make this example easier.
 diversity <- diversity %>%
   mutate(
     # Separate the "pristine" (ish) data
@@ -105,6 +99,24 @@ saveRDS(
   site_data[-2],
   paste(
     "../data/site_taxa_europe_",
+    format(Sys.time(), "%Y-%m-%d"),
+    ".rds",
+    sep = ""
+  )
+)
+
+site_data <- diversity %>%
+  filter(Phylum != "") %>%
+  group_by(SSBS) %>%   # for each site
+  summarise({
+    row <- as.numeric(levels(Phylum) %in% Phylum)
+    names(row) <- levels(Phylum)
+    as.data.frame(t(row))
+  })
+saveRDS(
+  site_data[-2],
+  paste(
+    "../data/site_phyla_europe_",
     format(Sys.time(), "%Y-%m-%d"),
     ".rds",
     sep = ""
