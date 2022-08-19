@@ -125,10 +125,15 @@ for_maps <- c(
 )     # applies WGS84 by itself
 names(for_maps) <- c("ifm_w", "b7_w")
 
-par(mfrow=c(1,2))
+pdf("../results/europe-background_ifm_w.pdf")
 plot(for_maps$ifm_w)
-plot(gis_data2$primary + gis_data2$secondary)
+dev.off()
 
-par(mfrow=c(1,2))
+pdf("../results/europe-background_b7_w.pdf")
 plot(for_maps$b7_w)
-plot(gis_data2$primary + gis_data2$secondary)
+dev.off()
+
+
+# par(mfrow=c(1,2))
+# plot(for_maps$b7_w)
+# plot(gis_data2$primary + gis_data2$secondary)
