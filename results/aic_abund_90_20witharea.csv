@@ -1,0 +1,12 @@
+model,weighting,aicDelta,weight
+Null,NA,31.531,0
+IFM,Weighted,1.083,0.225
+,Unweighted,2.669,0.102
+2km buffer,Weighted,18.42,0
+,Unweighted,23.482,0
+5km buffer,Weighted,7.375,0.01
+,Unweighted,1.515,0.181
+7km buffer,Weighted,0,0.387
+,Unweighted,11.127,0.001
+10km buffer,Weighted,2.841,0.093
+,Unweighted,11.827,0.001

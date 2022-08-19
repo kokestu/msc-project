@@ -1,17 +1,23 @@
 library(dplyr)
 
 # Get the connectivity metrics
-# file_suffix <- "_70"
+# file_suffix <- "_70_10"
 # patch_cutoff <- 0.7
 # conn <- as_tibble(readRDS(
 #   "../data/europe_conn_2_70_r10000_k10_2022-06-22.rds"
 # ))
-# ... and for 90% cutoff
-file_suffix <- "_90"
+# ... and for 90% cutoff 20km radius
+file_suffix <- "_90_20"
 patch_cutoff <- 0.9
 conn <- as_tibble(readRDS(
   "../data/europe_conn__eu_NA_90_r20000_k20_2022-07-28.rds"
 ))
+# # ... and for 90% cutoff 10km radius
+# file_suffix <- "_90_10"
+# patch_cutoff <- 0.9
+# conn <- as_tibble(readRDS(
+#   "../data/europe_conn__eu_NA_90_r10000_k102022-07-28.rds"
+# ))
 
 # dp <- 3   # rounding of the long/lat for site matching
 dp <- NA
