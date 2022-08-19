@@ -303,7 +303,7 @@ get_conn_metrics <- function(
     k = min(k, length(polys)),
     maxdist = radius,
     parallel = n_cores,
-    returnDist = T,
+    returnDist = T
   )
   # Calculate the lines between each site and its neighbor.
   lines_between <- as(nngeo::st_connect(

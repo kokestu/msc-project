@@ -1,2 +1,5 @@
 # Avoid including PDFs for figures in the repo
 *.pdf
+
+# Avoid including outputs rasters
+rasters/**
