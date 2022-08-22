@@ -70,24 +70,27 @@ plot(
   axes = FALSE, mar = c(3.1, 3.1, 3.1, 4.1)
 )
 
+# Choose site of interest
+site_id <- 51
+
 # Plot all patches
 plot(polys, add=T, col='black')
 
 # Highlight patches within 5km of site of interest
-nearby <- conn[conn$site == 50 & conn$dist < 5000,]$id
+nearby <- conn[conn$site == site_id & conn$dist < 5000,]$id
 plot(polys[nearby], add=T, col='blue')
 
 # # Plot all sites
 # points(sites, pch=4)
 
 # Highlight the site of interest
-points(sites[50], col='red', pch=16, cex=2)
+points(sites[site_id], col='red', pch=16, cex=2)
 
 # Plot a 5km buffer
-plot(terra::buffer(sites[50], 5000), add=T)
+plot(terra::buffer(sites[site_id], 5000), add=T)
 
 # Add the connecting lines
-line_ids <- as.numeric(rownames(conn[conn$site == 50,]))
+line_ids <- as.numeric(rownames(conn[conn$site == site_id,]))
 connecting_lines <- lines_between[line_ids]
 lines(connecting_lines)
 

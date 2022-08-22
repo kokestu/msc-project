@@ -64,21 +64,14 @@ conn2 <- conn %>%
       is.na(id),
       0,
       patch_cutoff * sum(
-        exp(-dist[which(dist > 0)]) * area[which(dist > 0)]
+        exp(-dist[which(dist >= 0)]) * area[which(dist >= 0)]
       )
     ),
     ifm_w = ifelse(
       is.na(id),
       0,
       patch_cutoff * sum(
-        exp(-weighted_dist[which(dist > 0)]) * area[which(dist > 0)]
-      )
-    ),
-    ifm_w_05 = ifelse(
-      is.na(id),
-      0,
-      patch_cutoff * sum(
-        exp(-0.5 * weighted_dist[which(dist > 0)]) * area[which(dist > 0)]
+        exp(-weighted_dist[which(dist >= 0)]) * area[which(dist >= 0)]
       )
     )
   ) %>%
@@ -86,7 +79,7 @@ conn2 <- conn %>%
   unique()   # remove the duplicate rows so we have a single row per site
 
 # Log the connectivity metrics. Add a small increment to avoid 0s.
-conn2 <- mutate(conn2, across(d_nn_uw:ifm_w_05, \(x) log(x + 1e-5)))
+conn2 <- mutate(conn2, across(d_nn_uw:ifm_w, \(x) log(x + 1e-5)))
 
 ## RASTERS
 # Create a points vector object
@@ -120,17 +113,17 @@ for (metric in names(points)[-1]) {
 
 ## Final rasters of interest
 for_maps <- c(
-  terra::rast("../results/rasters/background-eu-ifm_w.tif"),
-  terra::rast("../results/rasters/background-eu-b7_w.tif")
+  terra::rast("../results/rasters/background-eu-b7_w.tif"),
+  terra::rast("../results/rasters/background-eu-b2_uw.tif")
 )     # applies WGS84 by itself
-names(for_maps) <- c("ifm_w", "b7_w")
-
-pdf("../results/europe-background_ifm_w.pdf")
-plot(for_maps$ifm_w)
-dev.off()
+names(for_maps) <- c("b7_w", "b2_uw")
 
 pdf("../results/europe-background_b7_w.pdf")
 plot(for_maps$b7_w)
+dev.off()
+
+pdf("../results/europe-background_b2_uw.pdf")
+plot(for_maps$b2_uw)
 dev.off()
 
 

@@ -124,21 +124,14 @@ conn2 <- conn %>%
       is.na(id),
       0,
       patch_cutoff * sum(
-        exp(-dist[which(dist > 0)]) * area[which(dist > 0)]
+        exp(-dist[which(dist >= 0)]) * area[which(dist >= 0)]
       )
     ),
     ifm_w = ifelse(
       is.na(id),
       0,
       patch_cutoff * sum(
-        exp(-weighted_dist[which(dist > 0)]) * area[which(dist > 0)]
-      )
-    ),
-    ifm_w_05 = ifelse(
-      is.na(id),
-      0,
-      patch_cutoff * sum(
-        exp(-0.5 * weighted_dist[which(dist > 0)]) * area[which(dist > 0)]
+        exp(-weighted_dist[which(dist >= 0)]) * area[which(dist >= 0)]
       )
     )
   ) %>%
@@ -146,7 +139,7 @@ conn2 <- conn %>%
   unique()   # remove the duplicate rows so we have a single row per site
 
 # Log the connectivity metrics. Add a small increment to avoid 0s.
-conn2 <- mutate(conn2, across(d_nn_uw:ifm_w_05, \(x) log(x + 1e-5)))
+conn2 <- mutate(conn2, across(d_nn_uw:ifm_w, \(x) log(x + 1e-5)))
 
 # Finally, join the metrics to the data
 abund_data <- abundance %>%
@@ -571,17 +564,20 @@ model_cs_red_reml <- fit_models(
 
 ## AIC
 save_aic_data <- function(models, file_suffix, inc_nn = FALSE) {
+  model_names <- c(
+    "Null",
+    "IFM", NA,
+    "2km buffer", NA,
+    "5km buffer", NA,
+    "7km buffer", NA,
+    "10km buffer", NA,
+    if(inc_nn) c("NN", NA) else c()
+  )
   aic <- data.frame(
-    model = c(
-      "Null",
-      "IFM", NA,
-      "2km buffer", NA,
-      "5km buffer", NA,
-      "7km buffer", NA,
-      "10km buffer", NA,
-      if(inc_nn) c("NN", NA) else c()
+    model = model_names,
+    weighting = c(
+      "NA", rep(c("Weighted", "Unweighted"), length(model_names[-1]) / 2)
     ),
-    weighting = c("NA", rep(c("Weighted", "Unweighted"), if(inc_nn) 6 else 5)),
     aic = if(inc_nn) {
       AIC(
         models$null,
@@ -699,8 +695,8 @@ library(emmeans)
 
 best_ab <- model_abund_reml$b7_w
 ab_metric <- "b7_w"
-best_cs <- model_cs_reml$ifm_w
-cs_metric <- "ifm_w"
+best_cs <- model_cs_reml$b2_uw
+cs_metric <- "b2_uw"
 
 # Slopes
 emm <- emtrends(best_ab, "LandUse", var = ab_metric)

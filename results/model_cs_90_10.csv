@@ -1,7 +1,0 @@
-landuse,estimate,stderr,lower,upper,z,p
-Primary minimal,0.0226,0.0112,0.000656,0.0446,2.02,0.0435
-Primary non-minimal,0.0385,0.0767,-0.112,0.189,0.502,0.616
-Young secondary,-0.0384,0.0157,-0.0691,-0.00758,-2.44,0.0146
-Intermediate secondary,0.0385,0.0157,0.00777,0.0692,2.46,0.0141
-Mature secondary,0.018,0.175,-0.325,0.361,0.103,0.918
-In use,-0.0391,0.0173,-0.073,-0.00522,-2.26,0.0237

@@ -37,10 +37,10 @@ avg_patch_size <- tapply(result[,2], grouping, mean)
 pdf('../results/connectivity.pdf', height = 3.5)
 # par(mfrow=c(2,1))
 x <- result[,3]  # cov_range
-y <- result[,1]  # n_patches
+y <- log(result[,1])  # n_patches
 plot(
   x,y, xlim=c(0,1), ylim=c(0,max(y)),
-  xlab='Coverage', ylab='Number of patches'
+  xlab='Coverage', ylab='log(Number of patches)'
 )
 abline(v=0.9, col='red',lty=2)
 # x <- cov_range
