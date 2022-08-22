@@ -71,7 +71,6 @@ fetch_raster <- function(latmin, latmax, longmin, longmax) {
 #   - Add effort-corrected diversity metrics
 #   - Remove duplicate sites data
 #   - Sqrt effort-corrected measurement to make less non-normal
-#   - Round the Longitude/Latitude to a similar resolution to the raster.
 wrangle_data <- function(data, dp=NA) {
   logger::log_info("Wrangling data")
   # Mark all secondary vegetation as the same category.

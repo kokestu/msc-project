@@ -1,8 +1,40 @@
+# Include the analysis code I wrote elsewhere.
 source("factored.R")
 
-### RASTERS AND MAPS
-conn <- readRDS("../data/europe_background_conn_2022-08-19.rds")
+# Set up the suffix for files produced.
+file_suffix <- "_background_new-forest"
+
+# Coordinates of the edges of the New Forest
+longmin <- -1.8
+longmax <- -1.4
+latmin <- 50.75
+latmax <- 51
+
+# Set patch cutoff, search radius, and max neighbours
 patch_cutoff <- 0.9
+radius <- Inf
+k <- 100
+
+# Get the raster.
+gis_data <- fetch_raster(latmin, latmax, longmin, longmax)
+
+# Extract points for aggregated land cells.
+sites <- terra::as.points(
+  gis_data, values = FALSE,
+  na.rm = TRUE
+)
+site_locs <- data.frame(
+  Longitude = crds(sites)[, 1],
+  Latitude = crds(sites)[, 2]
+)
+
+# Extract the raw connectivity metrics -- this will take some time.
+conn <- get_conn_metrics(
+  gis_data, site_locs, patch_cutoff,
+  radius, k, file_suffix
+)
+
+## MAKE THE FIGURE
 
 ####################################
 ## Calculate connectivity metrics ##
@@ -87,52 +119,24 @@ points <- terra::vect(
   conn2[-1], geom = c("Longitude", "Latitude"),
   crs = "WGS84"
 )
+# Get the patch polygons.
+polys <- get_patch_polys(gis_data, patch_cutoff)
 
-# Coordinates of the edges of Europe.
-longmin <- -11
-longmax <- 30
-latmin <- 35
-latmax <- 70
-# Get the original raster.
-gis_data <- fetch_raster(latmin, latmax, longmin, longmax)
-e <- terra::ext(-10.5, 29.5, 35.5, 69.5)
-gis_data2 <- terra::aggregate(
-  terra::crop(gis_data, e),
-  fact = 30,  # 30km points
-  na.rm = TRUE
+for_map <- terra::rasterize(
+  points, gis_data, field = "b5_uw"
 )
 
-for (metric in names(points)[-1]) {
-  terra::rasterize(
-    points, gis_data2, field = metric, filename = paste(
-      "../results/rasters/background-eu-", metric, ".tif",
-      sep = ""
-    ), overwrite = TRUE
-  )
-}
+# Site
+slg <- -1.653148
+slt <- 50.9034
 
-## Final rasters of interest
-for_maps <- c(
-  terra::rast("../results/rasters/background-eu-b7_w.tif"),
-  terra::rast("../results/rasters/background-eu-b2_uw.tif")
-)     # applies WGS84 by itself
-names(for_maps) <- c("b7_w", "b2_uw")
-
-pdf("../results/europe-background_b7_w.pdf")
+pdf("../results/new-forest-b5_uw.pdf")
 plot(
-  for_maps$b7_w,
+  for_map$lyr1,
   axes = FALSE, mar = c(3.1, 3.1, 3.1, 4.1)
 )
-dev.off()
-
-pdf("../results/europe-background_b2_uw.pdf")
-plot(
-  for_maps$b2_uw,
-  axes = FALSE, mar = c(3.1, 3.1, 3.1, 4.1)
-)
+plot(polys, col = 'black', add = TRUE)
+points(slg, slt, col = 'red', pch=16, cex=2)
 dev.off()
 
 
-# par(mfrow=c(1,2))
-# plot(for_maps$b7_w)
-# plot(gis_data2$primary + gis_data2$secondary)
