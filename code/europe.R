@@ -770,7 +770,7 @@ ggplot(effects_ab) +
   # add the x and y label, and update the legend label. Can add a title here too
   # if we like.
   labs(
-    x = "log(7km Buffer)", y = "sqrt(Rescaled Abundance)",
+    x = "log(Weighted 7km Buffer)", y = "sqrt(Rescaled Abundance)",
     color = "Land Use", fill = "Land Use"
   )
 dev.off()
@@ -782,7 +782,7 @@ dev.off()
 # same name at this level of abstraction.
 with_metrics <- comp_diss_data
 effects_cs <- effects::effect(
-    term = "mod_hab:ifm_w",
+    term = "mod_hab:b2_uw",
     mod = best_cs
   ) %>%
   as.data.frame()
@@ -803,16 +803,16 @@ pdf(
 ggplot(effects_cs) +
   # plot the average slope (fit) for each land use
   geom_line(aes(
-    x = ifm_w, y = fit, group = mod_hab,
+    x = b2_uw, y = fit, group = mod_hab,
     colour = mod_hab
   )) +
   geom_ribbon(aes(
-    x = ifm_w, ymin = lower, ymax = upper,
+    x = b2_uw, ymin = lower, ymax = upper,
     group = mod_hab, fill = mod_hab 
   ), alpha = 0.2) +
   # add the x and y label
   labs(
-    x = "log(IFM)", y = "logit(Compositional Similarity)",
+    x = "log(Unweighted 2km Buffer)", y = "logit(Compositional Similarity)",
     color = "Land Use", fill = "Land Use"
   )
 dev.off()

@@ -122,21 +122,30 @@ points <- terra::vect(
 # Get the patch polygons.
 polys <- get_patch_polys(gis_data, patch_cutoff)
 
-for_map <- terra::rasterize(
-  points, gis_data, field = "b5_uw"
-)
+make_map <- function(points, polys, metric) {
+  for_map <- terra::rasterize(
+    points, gis_data, field = metric
+  )
+  # Site
+  slg <- -1.653148
+  slt <- 50.9034
+  # Plot
+  pdf(
+    paste(
+      "../results/new-forest-", metric, ".pdf",
+      sep = ""
+    )
+  )
+  plot(
+    for_map$lyr1,
+    axes = FALSE, mar = c(3.1, 3.1, 3.1, 4.1),
+    legend = FALSE
+  )
+  plot(polys, col = 'black', add = TRUE)
+  points(slg, slt, col = 'red', pch=16, cex=2)
+  dev.off()
+}
 
-# Site
-slg <- -1.653148
-slt <- 50.9034
-
-pdf("../results/new-forest-b5_uw.pdf")
-plot(
-  for_map$lyr1,
-  axes = FALSE, mar = c(3.1, 3.1, 3.1, 4.1)
-)
-plot(polys, col = 'black', add = TRUE)
-points(slg, slt, col = 'red', pch=16, cex=2)
-dev.off()
-
-
+make_map(points, polys, "b5_uw")
+make_map(points, polys, "d_nn_uw")
+make_map(points, polys, "ifm_uw")

@@ -61,13 +61,14 @@ lines_between <- as(nngeo::st_connect(
 
 pdf(
   "../results/metrics-figure.pdf",
-  width = 10, height = 8 # inches
+  # width = 10, height = 8 # inches
 )
 
 # Plot the habitat
 plot(
   gis_data$primary + gis_data$secondary,
-  axes = FALSE, mar = c(3.1, 3.1, 3.1, 4.1)
+  axes = FALSE, mar = c(3.1, 3.1, 3.1, 4.1),
+  legend = FALSE
 )
 
 # Choose site of interest
@@ -83,9 +84,6 @@ plot(polys[nearby], add=T, col='blue')
 # # Plot all sites
 # points(sites, pch=4)
 
-# Highlight the site of interest
-points(sites[site_id], col='red', pch=16, cex=2)
-
 # Plot a 5km buffer
 plot(terra::buffer(sites[site_id], 5000), add=T)
 
@@ -96,5 +94,8 @@ lines(connecting_lines)
 
 # Highlight the line to the nearest neighbour
 lines(connecting_lines[1], col='red', lwd=2)
+
+# Highlight the site of interest
+points(sites[site_id], col='red', pch=16, cex=2)
 
 dev.off()
