@@ -8,7 +8,7 @@ The files here may be used to reproduce the analysis performed in this project (
 
 `factored.R`: This contains helper functions used in the calculation of connectivity metrics.
 
-`extern/`: This folder must be populated by a file containing the `corvif` function from Mixed effects models and extensions in ecology with R. (2009). Zuur, AF, Ieno, EN, Walker, N, Saveliev, AA, and Smith, GM. Springer. This is used to perform colinearity testing.
+`extern/`: This folder must be populated by a file containing the `corvif` function from Mixed effects models and extensions in ecology with R. (2009). Zuur, AF, Ieno, EN, Walker, N, Saveliev, AA, and Smith, GM. Springer. This is used to perform colinearity testing. Can be accessed as `HighstatLibV10.R` from [here](http://highstat.com/Book3/support/4-types-of-software-theft).
 
 ### Raster and data outputs
 
