@@ -2,7 +2,7 @@
 
 ## Code
 
-The files here may be used to reproduce the analysis performed in this project.
+The files here may be used to reproduce the analysis performed in this project (although this analysis -- particularly calculation of connectivity metrics -- will take some time).
 
 ### Library code
 
@@ -15,7 +15,7 @@ The files here may be used to reproduce the analysis performed in this project.
 `background-metrics.R`: This produces the primary connectivity metrics for Western and Central Europe from the CSIRO rasters.
 `build-eu-rasters.R`: This produces the rasters of secondary connectivity metrics for Western and Central Europe after running `background-metrics.R`.
 
-## Core analyses
+### Core analyses
 
 `conn-data-eu.R`: This calculates the primary connectivity metrics for the sites used in the analysis, from the PREDICTS data (to get the locations) and the CSIRO rasters (to calculate the connectivity metrics).
 `get-abund-and-comp-diss.R`: This uses the PREDICTS data to calculate community abundance and compositional similarity metrics.
