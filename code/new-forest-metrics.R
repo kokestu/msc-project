@@ -122,7 +122,7 @@ points <- terra::vect(
 # Get the patch polygons.
 polys <- get_patch_polys(gis_data, patch_cutoff)
 
-make_map <- function(points, polys, metric) {
+make_map <- function(points, polys, metric, flip = FALSE) {
   for_map <- terra::rasterize(
     points, gis_data, field = metric
   )
@@ -137,7 +137,7 @@ make_map <- function(points, polys, metric) {
     )
   )
   plot(
-    for_map$lyr1,
+    if (flip) -1 * for_map$lyr1 else for_map$lyr1,
     axes = FALSE, mar = c(3.1, 3.1, 3.1, 4.1),
     legend = FALSE
   )
@@ -147,5 +147,5 @@ make_map <- function(points, polys, metric) {
 }
 
 make_map(points, polys, "b5_uw")
-make_map(points, polys, "d_nn_uw")
+make_map(points, polys, "d_nn_uw", flip = TRUE)
 make_map(points, polys, "ifm_uw")
