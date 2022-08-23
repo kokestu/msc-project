@@ -414,9 +414,6 @@ get_conn_metrics <- function(
 
 
 
-# TODO: Other metrics that can be interesting:
-#   - Habitat coverage of adjacent cells
-
 # A metric that counts the number of habitat patches within a given search
 # radius (default 10km). Might be possible to build this out into a proper
 # habitat network and do some analyses.
@@ -587,10 +584,6 @@ get_distance_data <- function(sites, polys, gis_data) {
   # a linestring with two points (the endpoints).
   # Then we can extract land use percentages along this line and weight the
   # result according to some metric of penetrability.
-  #
-  # TODO: This only does direct nearest neighbour, which should be okay at
-  # this scale, I think. We need to use geosphere::greatCircle to do distances
-  # properly, but I suspect this will end up being kind of tough...
   #
   # Run garbage collection to avoid issues.
   logger::log_info("Running garbage collection")

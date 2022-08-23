@@ -20,7 +20,7 @@ gis_data <- fetch_raster(latmin, latmax, longmin, longmax)
 e <- terra::ext(-10.5, 29.5, 35.5, 69.5)
 gis_data2 <- terra::aggregate(
   terra::crop(gis_data, e),
-  fact = 30,  # 30km points   # TODO: also remove points that fall in sea?
+  fact = 30,  # 30km points
   na.rm = TRUE
 )
 sites <- terra::as.points(

@@ -407,8 +407,7 @@ cs_dat_ab <- comp_diss_data %>%
     abund_data, by = c("s2" = "SSBS")
   )
 
-# List all of the studies I used, so that people can find the data. TODO:
-# Actually get the references.
+# List all of the studies I used, so that people can find the data.
 write.table(
   gsub(
     "_", "\\_",
