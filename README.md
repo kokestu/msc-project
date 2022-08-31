@@ -1,5 +1,7 @@
 # README
 
+Figures and data included in the thesis, and output rasters, can be accessed [in this Dropbox](https://www.dropbox.com/sh/vkgf3ryhpvy3ktn/AABzldu5V47f7f3SEzUzMRORa?dl=0).
+
 ## Code
 
 The files here may be used to reproduce the analysis performed in this project (although this analysis -- particularly calculation of connectivity metrics -- will take some time).
